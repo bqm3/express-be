@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -11,11 +12,12 @@ async function bootstrap() {
   const config = app.get(ConfigService);
   const prefix = config.get<string>('API_PREFIX', 'api/v1');
   const port = Number(config.get('PORT', 3001));
-  const corsOrigin = config.get<string>('CORS_ORIGIN', 'http://localhost:3000');
+  const corsOriginString = config.get<string>('CORS_ORIGIN', 'http://localhost:3000,http://localhost:3002');
+  const corsOrigin = corsOriginString.split(',').map(item => item.trim());
 
   app.setGlobalPrefix(prefix);
   app.enableCors({
-    origin: corsOrigin.split(',').map((o) => o.trim()),
+    origin: corsOrigin,
     credentials: true,
   });
   app.useGlobalPipes(
