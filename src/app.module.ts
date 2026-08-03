@@ -23,6 +23,8 @@ import { TrackingLog } from './modules/tracking/entities/tracking-log.entity';
 import { Media } from './modules/media/entities/media.entity';
 import { MediaType } from './modules/media/entities/media-type.entity';
 import { ContactChannel } from './modules/contact-channels/entities/contact-channel.entity';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -67,6 +69,10 @@ import { ContactChannel } from './modules/contact-channels/entities/contact-chan
           collate: 'utf8mb4_unicode_ci',
         },
       }),
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'public'),
+      serveRoot: '/public',
     }),
     RedisModule,
     AuthModule,
