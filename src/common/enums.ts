@@ -19,7 +19,7 @@ export enum Carrier {
 
 export enum AdminRole {
   ADMIN = 'admin',
-  MANAGER = 'manager',
+  USER = 'user',
 }
 
 export enum ContactChannelType {

@@ -14,6 +14,7 @@ import { TrackingModule } from './modules/tracking/tracking.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { MediaModule } from './modules/media/media.module';
 import { ContactChannelsModule } from './modules/contact-channels/contact-channels.module';
+import { UsersModule } from './modules/users/users.module';
 import { User } from './modules/users/entities/user.entity';
 import { Category } from './modules/categories/entities/category.entity';
 import { Post } from './modules/posts/entities/post.entity';
@@ -76,6 +77,7 @@ import { ContactChannel } from './modules/contact-channels/entities/contact-chan
     UploadModule,
     MediaModule,
     ContactChannelsModule,
+    UsersModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },

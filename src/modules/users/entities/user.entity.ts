@@ -40,7 +40,7 @@ export class User extends Model {
   declare fullName: string;
 
   @AllowNull(false)
-  @Default(AdminRole.MANAGER)
+  @Default(AdminRole.USER)
   @Column(DataType.ENUM(...Object.values(AdminRole)))
   declare role: AdminRole;
 

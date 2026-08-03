@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { Op } from 'sequelize';
 import { Post } from './entities/post.entity';
 import { Category } from '../categories/entities/category.entity';
+import { User } from '../users/entities/user.entity';
 import { CreatePostDto, UpdatePostDto, PostQueryDto } from './dto/post.dto';
 import { PostStatus } from '../../common/enums';
 import { paginate } from '../../common/dto/api-response.dto';
@@ -78,6 +79,16 @@ export class PostsService {
                 },
               }
             : {}),
+        },
+        {
+          model: User,
+          as: 'creator',
+          attributes: ['id', 'username', 'fullName'],
+        },
+        {
+          model: User,
+          as: 'updater',
+          attributes: ['id', 'username', 'fullName'],
         },
       ],
       order: [
