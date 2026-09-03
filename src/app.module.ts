@@ -23,6 +23,8 @@ import { TrackingLog } from './modules/tracking/entities/tracking-log.entity';
 import { Media } from './modules/media/entities/media.entity';
 import { MediaType } from './modules/media/entities/media-type.entity';
 import { ContactChannel } from './modules/contact-channels/entities/contact-channel.entity';
+import { SettingsModule } from './modules/settings/settings.module';
+import { SystemSetting } from './modules/settings/entities/setting.entity';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 
@@ -56,6 +58,7 @@ import { join } from 'path';
           MediaType,
           Media,
           ContactChannel,
+          SystemSetting,
         ],
         autoLoadModels: true,
         synchronize: false,
@@ -84,6 +87,7 @@ import { join } from 'path';
     MediaModule,
     ContactChannelsModule,
     UsersModule,
+    SettingsModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
