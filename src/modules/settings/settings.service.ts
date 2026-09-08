@@ -1,5 +1,6 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import axios from 'axios';
 import { SystemSetting } from './entities/setting.entity';
 
 export const DEFAULT_SETTINGS: Record<string, { value: string; description: string }> = {
@@ -47,10 +48,24 @@ export const DEFAULT_SETTINGS: Record<string, { value: string; description: stri
       'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.0541675030704!2d106.65963037480536!3d10.8071633893435!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3175294a17680537%3A0x1caddc4bfea2dc70!2zROG7i2NoIHbhu6UgZ-G7rWkgaMOgbmcgxJFpIE5nYSwg4bqkbiDEkOG7mSwgSMOgbiBRdeG7kWMsIE5o4bqtdCBC4bqjbiwgQW5oIMOaYyAtIEdsZXhwcmVzcw!5e0!3m2!1svi!2s!4v1784887617666!5m2!1svi!2s',
     description: 'URL Embed Google Maps',
   },
+  telegram_bot_token: {
+    value: '8982469312:AAGxmU48_ou-Ws6fav0O6G6t2gD_Fr0nglI',
+    description: 'Telegram Bot Token để nhận thông báo liên hệ',
+  },
+  telegram_chat_id: {
+    value: '1759811726',
+    description: 'Telegram Chat ID (ID người dùng hoặc ID nhóm nhận thông báo)',
+  },
+  telegram_notification_enabled: {
+    value: 'true',
+    description: 'Bật/tắt gửi thông báo liên hệ qua Telegram (true/false)',
+  },
 };
 
 @Injectable()
 export class SettingsService implements OnModuleInit {
+  private readonly logger = new Logger(SettingsService.name);
+
   constructor(
     @InjectModel(SystemSetting)
     private readonly settingModel: typeof SystemSetting,
@@ -140,5 +155,63 @@ export class SettingsService implements OnModuleInit {
     }
 
     return this.getPublicSettings();
+  }
+
+  async getTelegramUpdates(customToken?: string) {
+    const settings = await this.getPublicSettings();
+    const token = customToken || settings.telegram_bot_token || '8982469312:AAGxmU48_ou-Ws6fav0O6G6t2gD_Fr0nglI';
+    try {
+      const { data } = await axios.get(`https://api.telegram.org/bot${token}/getUpdates`);
+      if (!data.ok) {
+        throw new BadRequestException(`Telegram API error: ${data.description || 'Unknown error'}`);
+      }
+      return data.result || [];
+    } catch (err) {
+      if (err instanceof BadRequestException) throw err;
+      throw new BadRequestException(
+        `Không thể kết nối tới Telegram API: ${(err as Error).message}`,
+      );
+    }
+  }
+
+  async sendTestTelegram(customToken?: string, customChatId?: string) {
+    const settings = await this.getPublicSettings();
+    const token = customToken || settings.telegram_bot_token || '8982469312:AAGxmU48_ou-Ws6fav0O6G6t2gD_Fr0nglI';
+    const chatId = customChatId || settings.telegram_chat_id;
+
+    if (!chatId) {
+      throw new BadRequestException('Vui lòng cung cấp hoặc cấu hình Telegram Chat ID');
+    }
+
+    const testMessage = [
+      `🔔 <b>[BUUPHAM247] TIN NHẮN THỬ NGHIỆM</b>`,
+      `━━━━━━━━━━━━━━━━━━━━`,
+      `✅ Kết nối Telegram Bot thành công!`,
+      `⏰ <b>Thời gian:</b> ${new Intl.DateTimeFormat('vi-VN', {
+        timeZone: 'Asia/Ho_Chi_Minh',
+        dateStyle: 'medium',
+        timeStyle: 'medium',
+      }).format(new Date())}`,
+      `📌 Khi có khách gửi yêu cầu tại <code>https://buupham247quocte.com/lien-he</code>, hệ thống sẽ tự động gửi thông báo chi tiết vào đây.`,
+    ].join('\n');
+
+    try {
+      const chatIds = chatId.split(',').map((id) => id.trim()).filter(Boolean);
+      const results = [];
+      for (const id of chatIds) {
+        const { data } = await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+          chat_id: id,
+          text: testMessage,
+          parse_mode: 'HTML',
+        });
+        results.push(data);
+      }
+      return { success: true, results };
+    } catch (err) {
+      const msg = axios.isAxiosError(err) && err.response?.data?.description
+        ? err.response.data.description
+        : (err as Error).message;
+      throw new BadRequestException(`Gửi tin nhắn Telegram thất bại: ${msg}`);
+    }
   }
 }

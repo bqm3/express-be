@@ -14,32 +14,33 @@ import { ContactStatus } from '../../../common/enums';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
 export class CreateContactDto {
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MaxLength(150)
-  fullName: string;
+  fullName?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MaxLength(30)
-  phone: string;
+  phone?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsEmail()
-  email: string;
+  email?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MaxLength(255)
-  subject: string;
+  subject?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  @MinLength(10)
-  message: string;
+  message?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

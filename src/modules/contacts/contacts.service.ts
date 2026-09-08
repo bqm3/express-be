@@ -20,6 +20,8 @@ import {
 import { ContactStatus } from '../../common/enums';
 import { paginate } from '../../common/dto/api-response.dto';
 
+import { SettingsService } from '../settings/settings.service';
+
 @Injectable()
 export class ContactsService {
   private readonly logger = new Logger(ContactsService.name);
@@ -28,23 +30,38 @@ export class ContactsService {
     @InjectModel(ContactRequest)
     private readonly contactModel: typeof ContactRequest,
     private readonly config: ConfigService,
+    private readonly settingsService: SettingsService,
   ) {}
 
   async create(dto: CreateContactDto) {
+    const fullName = dto.fullName?.trim() || '';
+    const phone = dto.phone?.trim() || '';
+    const email = dto.email?.trim() || '';
+    const subject = dto.subject?.trim() || 'Yêu cầu tư vấn từ khách hàng';
+    const message = dto.message?.trim() || '(Khách hàng không để lại lời nhắn)';
+
+    if (!fullName && !phone) {
+      throw new BadRequestException('Vui lòng nhập Họ và tên hoặc Số điện thoại');
+    }
+
     await this.verifyRecaptcha(dto.recaptchaToken);
 
     const contact = await this.contactModel.create({
-      fullName: dto.fullName,
-      phone: dto.phone,
-      email: dto.email,
-      subject: dto.subject,
-      message: dto.message,
-      sourcePage: dto.sourcePage,
+      fullName: fullName || 'Khách hàng',
+      phone: phone || '',
+      email: email || '',
+      subject,
+      message,
+      sourcePage: dto.sourcePage || null,
       status: ContactStatus.NEW,
     });
 
     this.sendNotificationEmail(contact).catch((err) => {
       this.logger.error(`Failed to send CSKH email: ${err.message}`);
+    });
+
+    this.sendTelegramNotification(contact).catch((err) => {
+      this.logger.error(`Failed to send Telegram notification: ${err.message}`);
     });
 
     return contact;
@@ -198,12 +215,111 @@ export class ContactsService {
       subject: `[Liên hệ mới] ${contact.subject}`,
       text: [
         `Họ tên: ${contact.fullName}`,
-        `SĐT: ${contact.phone}`,
-        `Email: ${contact.email}`,
+        `SĐT: ${contact.phone || 'Chưa cung cấp'}`,
+        `Email: ${contact.email || 'Chưa cung cấp'}`,
         `Nguồn: ${contact.sourcePage || '-'}`,
         '',
         contact.message,
       ].join('\n'),
     });
+  }
+
+  private async sendTelegramNotification(contact: ContactRequest) {
+    let botToken =
+      this.config.get<string>('TELEGRAM_BOT_TOKEN') ||
+      '8982469312:AAGxmU48_ou-Ws6fav0O6G6t2gD_Fr0nglI';
+    let chatId = this.config.get<string>('TELEGRAM_CHAT_ID');
+    let isEnabled =
+      this.config.get<string>('TELEGRAM_NOTIFICATION_ENABLED', 'true') !== 'false';
+
+    try {
+      const publicSettings = await this.settingsService.getPublicSettings();
+      if (publicSettings.telegram_bot_token) {
+        botToken = publicSettings.telegram_bot_token;
+      }
+      if (publicSettings.telegram_chat_id) {
+        chatId = publicSettings.telegram_chat_id;
+      }
+      if (publicSettings.telegram_notification_enabled !== undefined) {
+        isEnabled = publicSettings.telegram_notification_enabled === 'true';
+      }
+    } catch (err) {
+      this.logger.warn(`Could not load settings for Telegram: ${(err as Error).message}`);
+    }
+
+    if (!isEnabled) {
+      this.logger.log('Telegram notification is disabled');
+      return;
+    }
+
+    if (!botToken || !chatId) {
+      this.logger.warn(
+        `Telegram notification skipped: botToken=${botToken ? 'set' : 'missing'}, chatId=${chatId ? 'set' : 'missing'}. Please configure TELEGRAM_CHAT_ID.`,
+      );
+      return;
+    }
+
+    const escapeHtml = (text: string = '') =>
+      text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    const timeStr = new Intl.DateTimeFormat('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      dateStyle: 'medium',
+      timeStyle: 'medium',
+    }).format(new Date());
+
+    const fullNameText = contact.fullName?.trim() || 'Chưa cung cấp';
+    const phoneText = contact.phone?.trim()
+      ? `<code>${escapeHtml(contact.phone)}</code>`
+      : '<i>(Chưa cung cấp)</i>';
+    const emailText = contact.email?.trim()
+      ? escapeHtml(contact.email)
+      : '<i>(Chưa cung cấp)</i>';
+    const subjectText = contact.subject?.trim()
+      ? escapeHtml(contact.subject)
+      : 'Yêu cầu tư vấn';
+    const messageText = contact.message?.trim()
+      ? escapeHtml(contact.message)
+      : '<i>(Không có lời nhắn)</i>';
+    const sourceText = contact.sourcePage
+      ? escapeHtml(contact.sourcePage)
+      : 'https://buupham247quocte.com/lien-he';
+
+    const messageHtml = [
+      `🚨 <b>[BUUPHAM247] CÓ DỮ LIỆU LIÊN HỆ MỚI!</b>`,
+      `━━━━━━━━━━━━━━━━━━━━`,
+      `👤 <b>Họ tên:</b> <b>${escapeHtml(fullNameText)}</b>`,
+      `📞 <b>Điện thoại:</b> ${phoneText}`,
+      `📧 <b>Email:</b> ${emailText}`,
+      `📌 <b>Tiêu đề:</b> ${subjectText}`,
+      `📝 <b>Nội dung:</b>\n${messageText}`,
+      `━━━━━━━━━━━━━━━━━━━━`,
+      `🌐 <b>Nguồn:</b> ${sourceText}`,
+      `⏰ <b>Thời gian:</b> ${timeStr}`,
+    ].join('\n');
+
+    const chatIds = chatId.split(',').map((id) => id.trim()).filter(Boolean);
+    for (const targetId of chatIds) {
+      try {
+        const { data } = await axios.post(
+          `https://api.telegram.org/bot${botToken}/sendMessage`,
+          {
+            chat_id: targetId,
+            text: messageHtml,
+            parse_mode: 'HTML',
+          },
+        );
+        if (!data.ok) {
+          this.logger.error(`Telegram API error for chat ${targetId}: ${JSON.stringify(data)}`);
+        } else {
+          this.logger.log(`Telegram notification sent successfully to chat ${targetId}`);
+        }
+      } catch (err) {
+        this.logger.error(`Failed to send Telegram notification to chat ${targetId}: ${(err as Error).message}`);
+      }
+    }
   }
 }

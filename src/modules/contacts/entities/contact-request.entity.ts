@@ -26,25 +26,25 @@ export class ContactRequest extends Model {
   })
   declare id: number;
 
-  @AllowNull(false)
+  @AllowNull(true)
   @Column(DataType.STRING(150))
-  declare fullName: string;
+  declare fullName: string | null;
 
-  @AllowNull(false)
+  @AllowNull(true)
   @Column(DataType.STRING(30))
-  declare phone: string;
+  declare phone: string | null;
 
-  @AllowNull(false)
+  @AllowNull(true)
   @Column(DataType.STRING(150))
-  declare email: string;
+  declare email: string | null;
 
-  @AllowNull(false)
+  @AllowNull(true)
   @Column(DataType.STRING(255))
-  declare subject: string;
+  declare subject: string | null;
 
-  @AllowNull(false)
+  @AllowNull(true)
   @Column(DataType.TEXT)
-  declare message: string;
+  declare message: string | null;
 
   @AllowNull(true)
   @Column(DataType.STRING(255))
