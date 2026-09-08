@@ -29,8 +29,8 @@ export class CreateContactDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @ValidateIf((o) => !!o.email)
-  @IsEmail()
+  @ValidateIf((o) => typeof o.email === 'string' && o.email.trim().length > 0)
+  @IsEmail({}, { message: 'Email không đúng định dạng' })
   email?: string;
 
   @ApiPropertyOptional()

@@ -37,19 +37,19 @@ export class ContactsService {
     const fullName = dto.fullName?.trim() || '';
     const phone = dto.phone?.trim() || '';
     const email = dto.email?.trim() || '';
-    const subject = dto.subject?.trim() || 'Yêu cầu tư vấn từ khách hàng';
-    const message = dto.message?.trim() || '(Khách hàng không để lại lời nhắn)';
+    const subject = dto.subject?.trim() || '';
+    const message = dto.message?.trim() || '';
 
-    if (!fullName && !phone) {
-      throw new BadRequestException('Vui lòng nhập Họ và tên hoặc Số điện thoại');
+    if (!phone && !email) {
+      throw new BadRequestException('Vui lòng nhập Số điện thoại hoặc Email');
     }
 
     await this.verifyRecaptcha(dto.recaptchaToken);
 
     const contact = await this.contactModel.create({
-      fullName: fullName || 'Khách hàng',
-      phone: phone || '',
-      email: email || '',
+      fullName,
+      phone,
+      email,
       subject,
       message,
       sourcePage: dto.sourcePage || null,
@@ -271,19 +271,21 @@ export class ContactsService {
       timeStyle: 'medium',
     }).format(new Date());
 
-    const fullNameText = contact.fullName?.trim() || 'Chưa cung cấp';
+    const fullNameText = contact.fullName?.trim()
+      ? `<b>${escapeHtml(contact.fullName)}</b>`
+      : '<i>(Không có)</i>';
     const phoneText = contact.phone?.trim()
       ? `<code>${escapeHtml(contact.phone)}</code>`
-      : '<i>(Chưa cung cấp)</i>';
+      : '<i>(Không có)</i>';
     const emailText = contact.email?.trim()
       ? escapeHtml(contact.email)
-      : '<i>(Chưa cung cấp)</i>';
+      : '<i>(Không có)</i>';
     const subjectText = contact.subject?.trim()
       ? escapeHtml(contact.subject)
-      : 'Yêu cầu tư vấn';
+      : '<i>(Không có)</i>';
     const messageText = contact.message?.trim()
       ? escapeHtml(contact.message)
-      : '<i>(Không có lời nhắn)</i>';
+      : '<i>(Không có)</i>';
     const sourceText = contact.sourcePage
       ? escapeHtml(contact.sourcePage)
       : 'https://buupham247quocte.com/lien-he';
@@ -291,7 +293,7 @@ export class ContactsService {
     const messageHtml = [
       `🚨 <b>[BUUPHAM247] CÓ DỮ LIỆU LIÊN HỆ MỚI!</b>`,
       `━━━━━━━━━━━━━━━━━━━━`,
-      `👤 <b>Họ tên:</b> <b>${escapeHtml(fullNameText)}</b>`,
+      `👤 <b>Họ tên:</b> ${fullNameText}`,
       `📞 <b>Điện thoại:</b> ${phoneText}`,
       `📧 <b>Email:</b> ${emailText}`,
       `📌 <b>Tiêu đề:</b> ${subjectText}`,
