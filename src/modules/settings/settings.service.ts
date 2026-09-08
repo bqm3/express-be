@@ -91,6 +91,9 @@ export class SettingsService implements OnModuleInit {
             value: meta.value,
             description: meta.description,
           });
+        } else if ((!existing.value || existing.value.trim() === '') && meta.value) {
+          existing.value = meta.value;
+          await existing.save();
         }
       }
     } catch (err) {

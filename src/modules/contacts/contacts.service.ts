@@ -228,17 +228,17 @@ export class ContactsService {
     let botToken =
       this.config.get<string>('TELEGRAM_BOT_TOKEN') ||
       '8982469312:AAGxmU48_ou-Ws6fav0O6G6t2gD_Fr0nglI';
-    let chatId = this.config.get<string>('TELEGRAM_CHAT_ID');
+    let chatId = this.config.get<string>('TELEGRAM_CHAT_ID') || '1759811726';
     let isEnabled =
       this.config.get<string>('TELEGRAM_NOTIFICATION_ENABLED', 'true') !== 'false';
 
     try {
       const publicSettings = await this.settingsService.getPublicSettings();
-      if (publicSettings.telegram_bot_token) {
-        botToken = publicSettings.telegram_bot_token;
+      if (publicSettings.telegram_bot_token?.trim()) {
+        botToken = publicSettings.telegram_bot_token.trim();
       }
-      if (publicSettings.telegram_chat_id) {
-        chatId = publicSettings.telegram_chat_id;
+      if (publicSettings.telegram_chat_id?.trim()) {
+        chatId = publicSettings.telegram_chat_id.trim();
       }
       if (publicSettings.telegram_notification_enabled !== undefined) {
         isEnabled = publicSettings.telegram_notification_enabled === 'true';
