@@ -2,13 +2,12 @@ import {
   IsEmail,
   IsEnum,
   IsInt,
-  IsNotEmpty,
   IsOptional,
   IsString,
   MaxLength,
-  MinLength,
+  ValidateIf,
 } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ContactStatus } from '../../../common/enums';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
@@ -16,29 +15,34 @@ import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 export class CreateContactDto {
   @ApiPropertyOptional()
   @IsOptional()
+  @ValidateIf((o) => !!o.fullName)
   @IsString()
   @MaxLength(150)
   fullName?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
+  @ValidateIf((o) => !!o.phone)
   @IsString()
   @MaxLength(30)
   phone?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
+  @ValidateIf((o) => !!o.email)
   @IsEmail()
   email?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
+  @ValidateIf((o) => !!o.subject)
   @IsString()
   @MaxLength(255)
   subject?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
+  @ValidateIf((o) => !!o.message)
   @IsString()
   message?: string;
 
