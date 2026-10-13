@@ -9,20 +9,20 @@ export const DEFAULT_SETTINGS: Record<string, { value: string; description: stri
     description: 'Dòng tiêu đề phụ ở góc trái header bar',
   },
   header_hotline: {
-    value: 'Hotline 0907.277.502',
+    value: 'Hotline 0983342004',
     description: 'Text Hotline hiển thị ở header bar',
   },
   header_hotline_link: {
-    value: 'tel:0907277502',
-    description: 'Đường dẫn gọi điện ở header (VD: tel:0907277502)',
+    value: 'tel:0983342004',
+    description: 'Đường dẫn gọi điện ở header (VD: tel:0983342004)',
   },
   footer_hotline: {
-    value: 'Hotline 0907.277.502',
+    value: 'Hotline 0983342004',
     description: 'Text Hotline hiển thị ở footer',
   },
   footer_hotline_link: {
-    value: 'tel:0907277502',
-    description: 'Đường dẫn gọi điện ở footer (VD: tel:0907277502)',
+    value: 'tel:0983342004',
+    description: 'Đường dẫn gọi điện ở footer (VD: tel:0983342004)',
   },
   footer_branches: {
     value: JSON.stringify([

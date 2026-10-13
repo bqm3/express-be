@@ -16,9 +16,17 @@ export class UploadService {
 
   constructor(private readonly config: ConfigService) {
     const port = this.config.get<number>('PORT', 3001);
-    const appUrl = this.config.get<string>('APP_URL', `http://localhost:${port}`);
-    this.publicUrl = `${appUrl}/public`;
+    const appUrl = this.trimTrailingSlash(
+      this.config.get<string>('APP_URL', `http://localhost:${port}`),
+    );
+    this.publicUrl = this.trimTrailingSlash(
+      this.config.get<string>('PUBLIC_ASSET_URL', `${appUrl}/public`),
+    );
     this.uploadDir = join(process.cwd(), 'public');
+  }
+
+  private trimTrailingSlash(value: string) {
+    return value.replace(/\/+$/, '');
   }
 
   async uploadImage(file: Express.Multer.File) {

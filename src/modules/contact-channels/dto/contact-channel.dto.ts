@@ -24,7 +24,7 @@ export class CreateContactChannelDto {
   channel: ContactChannelType;
 
   @ApiProperty({
-    example: '0907277502',
+    example: '0983342004',
     description: 'SĐT (digits) hoặc URL Zalo/Facebook hoặc email',
   })
   @IsString()
@@ -32,7 +32,7 @@ export class CreateContactChannelDto {
   @MaxLength(500)
   value: string;
 
-  @ApiPropertyOptional({ example: '0907.277.502' })
+  @ApiPropertyOptional({ example: '0983342004' })
   @IsOptional()
   @IsString()
   @MaxLength(150)
